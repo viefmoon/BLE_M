@@ -1,12 +1,11 @@
 //Slave code
-#include <Arduino.h>
-
+#include <Arduino.h>,
 #include <esp_now.h>
 #include <WiFi.h>
 #include <esp_wifi.h>
 
 //MAC to SET 
-uint8_t MastereNewMACAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; 
+uint8_t MastereNewMACAddress[] = {0xAA, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; 
 
 struct struct_message {
     uint8_t id; // must be unique for each sender board
@@ -41,18 +40,14 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
   Serial.printf("rssi value: %d \n", boardsStruct[msg.id-1].rrsi_);
   Serial.println();
 }
- 
 
-void SetNewMAC(){
-  esp_wifi_set_mac(WIFI_IF_STA, &MastereNewMACAddress[0]);
-}
 
 void setup() {
   Serial.begin(115200);
 
   //Set device as a Wi-Fi Station
   WiFi.mode(WIFI_STA);
-  SetNewMAC();
+  esp_wifi_set_mac(WIFI_IF_STA, &MastereNewMACAddress[0]);
 
   // Init ESP-NOW
   if (esp_now_init() != ESP_OK) {
