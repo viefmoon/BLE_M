@@ -1,8 +1,23 @@
-//Slave code
 #include <Arduino.h>,
 #include <esp_now.h>
 #include <WiFi.h>
 #include <esp_wifi.h>
+
+//Coordenadas de los 3 AP
+#define x1 0
+#define x2 5
+#define x3 2.5
+
+#define y1 0
+#define y2 0
+#define y3 4
+
+//calibration 
+#define MEASURE_RSSI 60
+#define n 2
+
+uint8_t x;
+uint8_t y;
 
 //MAC to SET 
 uint8_t MastereNewMACAddress[] = {0xAA, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; 
@@ -10,35 +25,41 @@ uint8_t MastereNewMACAddress[] = {0xAA, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 struct struct_message {
     uint8_t id; // must be unique for each sender board
     char uuid_[8];
-    uint8_t rrsi_;
+    float distance;
 };
 struct_message msg;
 
-struct_message board1;
-struct_message board2;
+struct struct_data {
+    char uuid_[8];
+    float distance;
+};
+struct_message msg;
 
-struct_message boardsStruct[2] = {board1, board2};
+struct_data board0;
+struct_data board1;
+struct_data board2;
+
+struct_data boardsStruct[3] = {board0, board1, board2};
 
 void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) {
   char macStr[18];
   Serial.print("Packet received from: ");
-  snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
-           mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+  snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
   Serial.println(macStr);
   memcpy(&msg, incomingData, sizeof(msg));
   Serial.printf("Board ID %u: %u bytes\n", msg.id, len);
   // Update the structures with the new incoming data
   for (size_t i = 0; i < 8; i++){
-    boardsStruct[msg.id-1].uuid_[i]  = msg.uuid_[i];
+    boardsStruct[msg.id].uuid_[i]  = msg.uuid_[i];
   }
-  boardsStruct[msg.id-1].rrsi_ = msg.rrsi_;
-      Serial.print("uuid value: ");
+  Serial.print("UUID: ");
   for (size_t i = 0; i < 8; i++){
-    Serial.print(boardsStruct[msg.id-1].uuid_[i]);
+    Serial.print(boardsStruct[msg.id].uuid_[i]);
   }
   Serial.println();
-  Serial.printf("rssi value: %d \n", boardsStruct[msg.id-1].rrsi_);
-  Serial.println();
+  boardsStruct[msg.id].distance = msg.distance;
+  Serial.print("Distance: ");
+  Serial.println(boardsStruct[msg.id].distance);
 }
 
 
