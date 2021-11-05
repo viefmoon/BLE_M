@@ -26,16 +26,11 @@ struct struct_message {
     uint8_t id; // must be unique for each sender board
     char uuid_[8];
     uint8_t rssi;
-    float distance;
 };
 struct_message msg;
+struct_message aux;
 
-struct struct_data {
-    char uuid_[8];
-    float distance;
-};
-
-struct_data boardsStruct[3][9];
+uint8_t rssi[3][5];
 
 uint8_t cont[3] = {0, 0, 0};
 
@@ -47,22 +42,33 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
   Serial.println(macStr);
   memcpy(&msg, incomingData, sizeof(msg));
   Serial.printf("Board ID %u: %u bytes\n", msg.id, len);
-  if(cont[msg.id]==9){
-    cont[msg.id]=0;
+
+  if(aux.uuid_[0]==0){
+    //Se agrega un uuid para empezar a comprobar este
+    for (size_t i = 0; i <= 8; i++){
+      aux.uuid_[i]  = msg.uuid_[i];
+    }
+    Serial.print("Searching for UUID: ");
+    for (size_t i = 0; i < 8; i++){
+      Serial.print(aux.uuid_[i]);
+    }
+    Serial.println("");
   }
-  // Update the structures with the new incoming data
-  for (size_t i = 0; i < 8; i++){
-    boardsStruct[msg.id][cont[msg.id]].uuid_[i]  = msg.uuid_[i];
+      for (size_t i = 0; i < 8; i++){
+      Serial.print(msg.uuid_[i]);
+    }
+    Serial.println("");
+  if(strcmp(aux.uuid_, msg.uuid_) == 0){
+    if(cont[msg.id]==5){
+      cont[msg.id]=0;
+    }
+    rssi[msg.id][cont[msg.id]] = msg.rssi;
+    Serial.print("Board ID: ");
+    Serial.print(msg.id);
+    Serial.print("  RSSI: ");
+    Serial.println(rssi[msg.id][cont[msg.id]]);
+    cont[msg.id]++;
   }
-  Serial.print("UUID: ");
-  for (size_t i = 0; i < 8; i++){
-    Serial.print(boardsStruct[msg.id][cont[msg.id]].uuid_[i]);
-  }
-  Serial.println();
-  boardsStruct[msg.id][cont[msg.id]].distance = msg.distance;
-  cont[msg.id]++;
-  Serial.print("Distance: ");
-  Serial.println(boardsStruct[msg.id][cont[msg.id]].distance);
 }
 
 
