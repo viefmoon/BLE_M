@@ -53,16 +53,6 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
   Serial.println(macStr);
   memcpy(&msg, incomingData, sizeof(msg));
-  for (size_t i = 0; i < 9; i++){
-      Serial.print(msg.uuid_[i]);
-  }
-   for (size_t i = 0; i < 9; i++){
-      Serial.print(aux.uuid_[i]);
-  }
-  Serial.print("  RSSI: ");
-  Serial.println(msg.rssi);
-  Serial.printf("Board ID %u: %u bytes\n", msg.id, len);
-
 
   if(aux.uuid_[0]==0){
     //Se agrega un uuid para empezar a comprobar este
@@ -75,15 +65,12 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
   }
 
   if(strcmp(aux.uuid_, msg.uuid_) == 0){
-    Serial.println("same");
     if(cont[msg.id]==5){
       cont[msg.id]=0;
       flag_cont[msg.id] = 1;
     }
     if(flag_cont[0]&&flag_cont[1]&&flag_cont[2]){
-      cont[msg.id]=0;
-      flag_cont[msg.id] = 1;
-      Serial.print("Average RSSI of slaves ");
+      Serial.println("Average RSSI of slaves ");
       for (size_t i = 0; i < 3; i++){
         prom[i] = average(i);
         Serial.print(i);
