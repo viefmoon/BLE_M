@@ -36,6 +36,9 @@ int8_t MEASURE_RSSI[slavesq] = {-60,-60,-60};
 uint64_t TimePassedSlaveReply[Max_uuid][slavesq]={{0,0,0},{0,0,0},{0,0,0}};
 uint64_t CurrentTime = 0;
 
+uint64_t TimePassedSlaveReply[3]={0,0,0};
+uint64_t CurrentTime = 0;
+
 //MAC to SET 
 uint8_t MastereNewMACAddress[] = {0xAA, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; 
 
@@ -118,7 +121,14 @@ void CheckTimePassedSlaveReply(size_t aux_){
 }
 
 void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) {
+<<<<<<< HEAD
   flag_aux = false;
+=======
+  char macStr[18];
+  //Serial.print("Packet received from: ");
+  //snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+  //Serial.println(macStr);
+>>>>>>> main
   memcpy(&msg, incomingData, sizeof(msg));
   //Comprueba si el uuid habia sido  ya guardado 
   for (size_t x = 0; x < Max_uuid; x++){
@@ -142,6 +152,7 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
       flag_aux = true;
     }
   }
+<<<<<<< HEAD
   //No esta guardado en ninguna variable auxiliar, guardar en nueva variable auxiliar
   for (size_t i = 0; i < Max_uuid; i++){
     if(!flag_aux){
@@ -154,6 +165,45 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
         TimePassedSlaveReply[i][msg.id] = esp_timer_get_time();
       }
     }
+=======
+  //si es igual el uuid guardado a el uuid detectado
+  if(strcmp(aux.uuid_, msg.uuid_) == 0){
+    //Si el contador se lleno, empezar desde 0 e ir llenado de forma ascendente
+    if(cont[msg.id]==5){
+      cont[msg.id]=0;
+      flag_cont[msg.id] = 1;
+    }
+    //Guardar el rrsi medido en la cola rssi del esclavo detectado
+    rssi[msg.id][cont[msg.id]] = msg.rssi;
+    TimePassedSlaveReply[msg.id] = esp_timer_get_time();
+    Serial.print("Board ID: ");
+    Serial.print(msg.id);
+    Serial.print("  RSSI: ");
+    Serial.println(rssi[msg.id][cont[msg.id]]);
+    cont[msg.id]++;
+    if(flag_cont[0]&&flag_cont[1]&&flag_cont[2]){
+      Serial.println("Average RSSI of slaves ");
+      for (size_t i = 0; i < 3; i++){
+        prom[i] = average(i);
+        Serial.print(i);
+        Serial.print(" : ");
+        Serial.println(prom[i]);
+      }
+    }
+  }
+}
+
+void CheckTimePassedSlaveReply(){
+  for (size_t i = 0; i < 3; i++){
+    CurrentTime = esp_timer_get_time();
+    if(CurrentTime > TimePassedSlaveReply[i]+3000000){
+      //Si ya pasaron 3 segundos despues de la ultima respuesta de un esclavo, vaciar la cola de rssi y poner el flag en 0
+      for (size_t x = 0; x < 5; x++){
+        rssi[i][x]= 0;
+        flag_cont[i] = 0;
+      }
+    }
+>>>>>>> main
   }
 }
 
@@ -183,6 +233,7 @@ void setup() {
 }
 
 void loop() {
+<<<<<<< HEAD
   for (size_t x = 0; x < Max_uuid; x++){ 
     CheckTimePassedSlaveReply(x);   
   }
@@ -200,4 +251,9 @@ void loop() {
       CalculatePosition(i);
     } 
   }
+=======
+
+  CheckTimePassedSlaveReply();
+
+>>>>>>> main
 }
